@@ -1,5 +1,3 @@
-import 'mattermost-webapp/tests/setup';
-
 import {gpgEncrypt, gpgBackupFormat, gpgParseBackup} from '../src/backup_gpg';
 import {PrivateKeyMaterial} from '../src/e2ee';
 

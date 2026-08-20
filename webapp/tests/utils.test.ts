@@ -1,5 +1,3 @@
-import 'mattermost-webapp/tests/setup';
-
 import {debouncedMerge, debouncedMergeMapArrayReducer} from '../src/utils';
 
 test('utils/debouncedMerge', async () => {
