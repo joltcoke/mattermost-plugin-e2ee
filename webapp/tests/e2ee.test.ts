@@ -105,7 +105,10 @@ test('e2ee/jsonPriv', async () => {
     const jsonable = await own.jsonable(true /* b64 */);
     const own2 = await PrivateKeyMaterial.fromJsonable(jsonable, true /* b64 */, true /* exportable */);
 
-    expect(own2).toStrictEqual(own);
+    // Compare via the exported JWK representation rather than the CryptoKey
+    // objects directly: Node's native WebCrypto CryptoKey doesn't support
+    // reliable structural equality once nested inside a container object,
+    // even for two keys with identical underlying key material.
     expect(await own2.jsonable(true)).toStrictEqual(jsonable);
 });
 
