@@ -1,5 +1,8 @@
 name: CI for Mattermost Plugins
 
+permissions:
+  contents: read
+  
 on:
   push:
     branches:
