@@ -80,7 +80,7 @@ func (p *Plugin) PushPubKey(c *Context, w http.ResponseWriter, r *http.Request) 
 }
 
 type GetPubKeysRequest struct {
-	UserIds []string `json:"userIds"`
+	UserIDs []string `json:"userIds"`
 }
 
 type GetPubKeysResponse struct {
@@ -101,7 +101,7 @@ func (p *Plugin) GetPubKeys(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := NewGetPubKeysReponse()
-	for _, uid := range req.UserIds {
+	for _, uid := range req.UserIDs {
 		pubkey, err := p.GetUserPubKey(uid)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -221,7 +221,7 @@ type GetKeyServerResp struct {
 	URL string `json:"url"`
 }
 
-func (p *Plugin) GetKeyServer(c *Context, w http.ResponseWriter, r *http.Request) {
+func (p *Plugin) GetKeyServer(_ *Context, w http.ResponseWriter, _ *http.Request) {
 	if !p.GPGBackupEnabled() {
 		http.Error(w, "GPG backup disabled", http.StatusNotFound)
 		return
@@ -251,7 +251,7 @@ func (p *Plugin) InitializeAPI() {
 	apiRouter.HandleFunc("/gpg/key_server", p.CheckAuth(p.AttachContext(p.GetKeyServer))).Methods(http.MethodGet)
 }
 
-func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
+func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Request) {
 	p.router.ServeHTTP(w, r)
 }
 
