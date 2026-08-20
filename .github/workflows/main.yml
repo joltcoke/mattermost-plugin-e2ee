@@ -25,9 +25,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Fix permissions for temp directory
-        run: sudo chmod -R 777 /__w/_temp
-
       - name: Restore Go cache
         uses: actions/cache@v3
         with:
@@ -82,9 +79,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Fix permissions for temp directory
-        run: sudo chmod -R 777 /__w/_temp
-
       - name: Restore Go cache
         uses: actions/cache@v3
         with:
@@ -124,9 +118,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-
-      - name: Fix permissions for temp directory
-        run: sudo chmod -R 777 /__w/_temp
 
       - name: Restore Go cache
         uses: actions/cache@v3
