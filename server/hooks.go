@@ -7,7 +7,7 @@ import (
 	"github.com/mattermost/mattermost-server/v5/plugin"
 )
 
-func (p *Plugin) MessageWillBePosted(c *plugin.Context, post *model.Post) (*model.Post, string) {
+func (p *Plugin) MessageWillBePosted(_ *plugin.Context, post *model.Post) (*model.Post, string) {
 	// Bypass for our bot
 	if post.UserId == p.BotUserID {
 		return nil, ""

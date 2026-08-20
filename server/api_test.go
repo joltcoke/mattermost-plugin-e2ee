@@ -27,7 +27,7 @@ func RunTests(tests *[]TestDesc, t *testing.T, mockAPI *plugintest.API) {
 	}
 
 	for _, tt := range *tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			p := Plugin{}
 			p.SetAPI(mockAPI)
 			p.InitializeAPI()

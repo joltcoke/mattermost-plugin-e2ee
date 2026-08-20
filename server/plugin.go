@@ -103,7 +103,7 @@ func (p *Plugin) ShowGPGBackup(args *model.CommandArgs) *model.AppError {
 	return nil
 }
 
-func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	split := strings.Fields(args.Command)
 	command := split[0]
 	action := "help"
