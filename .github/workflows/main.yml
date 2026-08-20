@@ -23,7 +23,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '24'
 
       - name: Restore Go cache
         uses: actions/cache@v4
@@ -34,7 +34,7 @@ jobs:
             go-mod-v1-${{ runner.os }}-
 
       - name: Restore npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: webapp/node_modules
           key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
@@ -45,6 +45,13 @@ jobs:
         run: |
           cd webapp
           npm install
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.8
+          args: --timeout=5m
+          skip-cache: true
 
       - name: Run linters and style checks
         run: make check-style
@@ -77,7 +84,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '24'
 
       - name: Restore Go cache
         uses: actions/cache@v4
@@ -117,10 +124,10 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '24'
 
       - name: Restore Go cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
@@ -128,7 +135,7 @@ jobs:
             go-mod-v1-${{ runner.os }}-
 
       - name: Restore npm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: webapp/node_modules
           key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
@@ -141,6 +148,8 @@ jobs:
           npm install
 
       - name: Build Plugin Bundle
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
         run: make dist
 
       - name: Generate Release Notes
