@@ -1,0 +1,196 @@
+name: CI for Mattermost Plugins
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: circleci/golang:1.16.0-node
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.16'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Fix permissions for temp directory
+        run: sudo chmod -R 777 /__w/_temp
+
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-mod-v1-${{ runner.os }}-
+
+      - name: Restore npm cache
+        uses: actions/cache@v3
+        with:
+          path: webapp/node_modules
+          key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
+          restore-keys: |
+            npm-v1-${{ runner.os }}-
+
+      - name: Install npm dependencies
+        run: |
+          cd webapp
+          npm install
+
+      - name: Run linters and style checks
+        run: make check-style
+
+      - name: Go mod tidy
+        run: go mod tidy -v
+
+      - name: Check diff of go.mod and go.sum
+        run: |
+          git --no-pager diff --exit-code go.mod go.sum || (echo "Please run 'go mod tidy' and commit the changes in go.mod and go.sum." && exit 1)
+
+      - name: Run make apply
+        run: make apply
+
+      - name: Check diff of generated manifest files
+        run: |
+          git --no-pager diff --exit-code *manifest.* || (echo "Please run 'make apply' and commit the changes in the generated manifests." && exit 1)
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: circleci/golang:1.16.0-node
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.16'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Fix permissions for temp directory
+        run: sudo chmod -R 777 /__w/_temp
+
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-mod-v1-${{ runner.os }}-
+
+      - name: Restore npm cache
+        uses: actions/cache@v3
+        with:
+          path: webapp/node_modules
+          key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
+          restore-keys: |
+            npm-v1-${{ runner.os }}-
+
+      - name: Install npm dependencies
+        run: |
+          cd webapp
+          npm install
+
+      - name: Run tests
+        run: make test
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: circleci/golang:1.16.0-node
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.16'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Fix permissions for temp directory
+        run: sudo chmod -R 777 /__w/_temp
+
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-mod-v1-${{ runner.os }}-
+
+      - name: Restore npm cache
+        uses: actions/cache@v3
+        with:
+          path: webapp/node_modules
+          key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
+          restore-keys: |
+            npm-v1-${{ runner.os }}-
+
+      - name: Install npm dependencies
+        run: |
+          cd webapp
+          npm install
+
+      - name: Build Plugin Bundle
+        run: make dist
+
+      - name: Generate Release Notes
+        run: |
+          printf "Supported Mattermost Server Versions: **$(jq .min_server_version -r < plugin.json)+** \n## Enhancements\n\n## Fixes\n" >> dist/release-notes.md
+          if [[ $(git tag -l | wc -l) -eq 1 ]]; then
+            git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git rev-list --max-parents=0 HEAD) HEAD >> dist/release-notes.md
+          else
+            git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git describe --tags --abbrev=0 $(git describe --tags --abbrev=0)^)..HEAD >> dist/release-notes.md
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*.tar.gz
+
+  deploy-release-github:
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Install ghr
+        run: go install github.com/tcnksm/ghr@latest
+
+      - name: Publish Release on GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ghr -t $GITHUB_TOKEN -u ${{ github.repository_owner }} -r ${{ github.event.repository.name }} -b "$(cat dist/release-notes.md)" -c ${{ github.sha }} -n ${{ github.ref_name }} -delete ${{ github.ref_name }} dist/*.tar.gz
