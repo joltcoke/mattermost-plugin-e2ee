@@ -278,7 +278,7 @@ export function isEncryptedP2PMessageJSON(obj: any, hasb64 = true): obj is Encry
 
 export class EncryptedP2PMessage {
     signature!: ArrayBuffer
-    iv!: Uint8Array
+    iv!: Uint8Array<ArrayBuffer>
     pubECDHE!: CryptoKey
 
     // Map public key ID to encrypted AES key

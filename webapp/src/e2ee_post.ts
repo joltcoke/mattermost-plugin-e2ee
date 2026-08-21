@@ -21,7 +21,7 @@ if (isNode) {
 
 export async function encryptPost(post: Post, privkey: PrivateKeyMaterial, pubkeys: Array<PublicKeyMaterial>) {
     const postMsg = new UtilTextEncoder().encode(post.message);
-    const encrMsg = await EncryptedP2PMessage.encrypt(postMsg, privkey, pubkeys);
+    const encrMsg = await EncryptedP2PMessage.encrypt(postMsg.buffer, privkey, pubkeys);
     const encrMsgJson = await encrMsg.jsonable(true /* encb64 */);
     post.props = {e2ee: encrMsgJson};
     post.message = 'Encrypted message';

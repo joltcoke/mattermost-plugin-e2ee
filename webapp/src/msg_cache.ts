@@ -65,7 +65,7 @@ class MsgCacheImpl {
         // This works because the order of insertion in the Map object is saved
         // (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
         const first = obj.keys().next().value;
-        obj.delete(first);
+        obj.delete(first!);
     }
 
     private static postID(post: Post): string {

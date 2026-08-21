@@ -55,7 +55,7 @@ export class ClientClass {
         try {
             return (await this.doGet(this.url + '/gpg/key_server').then((r) => r.json())).url;
         } catch (e) {
-            if (e.status_code === 404) {
+            if (e instanceof ClientError && e.status_code === 404) {
                 throw new GPGBackupDisabledError();
             }
             throw e;
