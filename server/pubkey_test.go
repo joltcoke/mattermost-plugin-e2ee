@@ -8,8 +8,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin/plugintest"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -123,7 +123,7 @@ func Test_pubkey_channelsMembersWithoutKeys(t *testing.T) {
 		},
 	})
 
-	mockAPI.On("GetChannelMembers", chanID, 0, maxUsersPerTeam).Return(&model.ChannelMembers{
+	mockAPI.On("GetChannelMembers", chanID, 0, maxUsersPerTeam).Return(model.ChannelMembers{
 		{
 			UserId: "user1",
 		},
