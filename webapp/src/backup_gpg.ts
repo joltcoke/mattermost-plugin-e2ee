@@ -37,7 +37,7 @@ function unarmor(text: string): ArrayBuffer | null {
 
 export async function gpgBackupFormat(privKey: PrivateKeyMaterial): Promise<string> {
     const data = JSON.stringify(await privKey.jsonable(true /* tob64 */));
-    return armor(new TextEncoder().encode(data));
+    return armor(new TextEncoder().encode(data).buffer);
 }
 
 export async function gpgParseBackup(backup: string, exportable: boolean): Promise<PrivateKeyMaterial> {

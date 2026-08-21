@@ -5,7 +5,7 @@ export const isNode = typeof process !== 'undefined' &&
   process.versions != null &&
   process.versions.node != null;
 
-export function concatArrayBuffers(...args: Array<ArrayBuffer>) {
+export function concatArrayBuffers(...args: Array<ArrayBuffer | ArrayBufferView<ArrayBuffer>>) {
     const buffers = Array.prototype.slice.call(args);
     const buffersLengths = buffers.map((b) => {
         return b.byteLength;
