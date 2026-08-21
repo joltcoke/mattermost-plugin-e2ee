@@ -32,7 +32,8 @@
     "expect": true,
     "before": true,
     "after": true,
-    "beforeEach": true
+    "beforeEach": true,
+    "structuredClone": true
   },
   "settings": {
     "import/resolver": {

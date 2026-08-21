@@ -11,15 +11,14 @@ Object.defineProperty(document, 'baseURI', {
     configurable: true,
 });
 
-// jsdom (as bundled with this Jest version) doesn't provide TextEncoder/
-// TextDecoder as globals, but openpgp's elliptic-curve code needs them at
-// import time. Use the same pure-JS polyfill already used elsewhere in this
-// test suite (tests/helpers.ts) rather than Node's own util.TextEncoder:
-// Node's version constructs Uint8Arrays tied to Node's own outer realm, which
-// fail `instanceof Uint8Array` checks inside code running in jsdom's realm
-// (confirmed: encode() output was `instanceof Uint8Array === false` from
-// both the jsdom window and the Jest sandbox global). This polyfill runs in
-// the same realm as the code that calls it, so it doesn't have that problem.
+// jest-environment-jsdom's bundled jsdom (26.1.0) still doesn't provide
+// TextEncoder/TextDecoder as globals, but openpgp's elliptic-curve code
+// needs them at import time. Use the same pure-JS polyfill already used
+// elsewhere in this test suite (tests/helpers.ts) rather than Node's own
+// util.TextEncoder: Node's version constructs Uint8Arrays tied to Node's own
+// outer realm, which fail `instanceof Uint8Array` checks inside code running
+// in jsdom's realm. This polyfill runs in the same realm as the code that
+// calls it, so it doesn't have that problem.
 const textEncoding = require('text-encoding-utf-8');
 global.TextEncoder = textEncoding.TextEncoder;
 global.TextDecoder = textEncoding.TextDecoder;

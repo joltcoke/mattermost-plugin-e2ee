@@ -113,12 +113,7 @@ test('privkey/generateNoGPG', async () => {
     ]);
 });
 
-// Skipped: hits the same openpgp@6 armor-encode/decode-vs-Jest-jsdom
-// incompatibility documented in tests/backup_gpg.test.ts's skipped
-// e2ee/backupGPGRestore (this test exercises the same gpgEncrypt() code path
-// via AppPrivKey.generate() -> getGPGPubKey()). See that comment for the
-// full investigation; not a production bug (verified separately).
-test.skip('privkey/generateWithGPG', async () => {
+test('privkey/generateWithGPG', async () => {
     const store = testConfigureStore(await getStoreInit());
 
     initOpenGPG();
