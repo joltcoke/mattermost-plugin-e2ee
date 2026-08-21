@@ -20,7 +20,8 @@ export async function finiOpenGPG() {
 
 export async function generateGPGKey() {
     return openpgp.generateKey({
-        userIds: [{name: 'Jon Smith', email: 'jon@example.com'}],
-        curve: 'ed25519',
+        userIDs: [{name: 'Jon Smith', email: 'jon@example.com'}],
+        type: 'ecc',
+        curve: 'ed25519Legacy',
     });
 }
