@@ -41,7 +41,8 @@
     "babel-plugin-typescript-to-proptypes": "2.1.0",
     "css-loader": "3.6.0",
     "eslint": "7.4.0",
-    "eslint-import-resolver-webpack": "0.12.2",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-import-resolver-webpack": "0.13.11",
     "eslint-plugin-import": "2.22.0",
     "eslint-plugin-react": "7.20.3",
     "eslint-plugin-react-hooks": "4.0.6",
@@ -61,16 +62,16 @@
     "webpack-cli": "7.2.2"
   },
   "dependencies": {
-    "@types/openpgp": "4.4.18",
     "@types/react-bootstrap": "0.32.26",
     "base64-arraybuffer": "1.0.1",
     "core-js": "3.6.5",
     "mattermost-redux": "5.33.1",
-    "openpgp": "4.10.10",
+    "openpgp": "6.3.1",
     "react": "16.13.1",
     "react-intl": "6.8.9",
     "react-redux": "7.2.0",
     "redux": "4.0.5",
+    "tslib": "2.8.1",
     "typescript": "5.9.3"
   },
   "jest": {
@@ -90,7 +91,8 @@
       "^.+\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "identity-obj-proxy",
       "^.+\\.(css|less|scss)$": "identity-obj-proxy",
       "^.*i18n.*\\.(json)$": "<rootDir>/tests/i18n_mock.json",
-      "^bundle-loader\\?lazy\\!(.*)$": "$1"
+      "^bundle-loader\\?lazy\\!(.*)$": "$1",
+      "^node:crypto$": "<rootDir>/tests/node_crypto_shim.js"
     },
     "moduleDirectories": [
       "",
@@ -106,7 +108,8 @@
     ],
     "setupFiles": [
       "jest-canvas-mock",
-      "fake-indexeddb/auto"
+      "fake-indexeddb/auto",
+      "<rootDir>/tests/openpgp_jsdom_shim.js"
     ],
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup.tsx"

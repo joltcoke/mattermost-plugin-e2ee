@@ -92,6 +92,7 @@ module.exports = {
         'react-router-dom': 'ReactRouterDom',
         'fake-indexeddb': 'commonjs fake-indexeddb',
         crypto: 'commonjs crypto',
+        util: 'commonjs util',
     },
     output: {
         devtoolNamespace: PLUGIN_ID,

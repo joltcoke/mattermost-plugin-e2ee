@@ -50,10 +50,10 @@ export async function gpgParseBackup(backup: string, exportable: boolean): Promi
 }
 
 export async function gpgEncrypt(data: string, gpgPubKeyArmored: string): Promise<string> {
-    const keys = (await openpgp.key.readArmored(gpgPubKeyArmored)).keys;
-    const {data: encrypted} = await openpgp.encrypt({
-        message: await openpgp.message.fromText(data),
-        publicKeys: keys,
+    const keys = await openpgp.readKeys({armoredKeys: gpgPubKeyArmored});
+    const encrypted = await openpgp.encrypt({
+        message: await openpgp.createMessage({text: data}),
+        encryptionKeys: keys,
     });
     return encrypted;
 }
