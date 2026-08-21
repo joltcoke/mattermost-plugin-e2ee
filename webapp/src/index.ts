@@ -34,7 +34,7 @@ export default class Plugin {
         let postUpdateSupported = (typeof registry.registerMessageWillBeUpdatedHook !== 'undefined');
         if (typeof mmconfig.BuildNumber !== 'undefined') {
             const version = mmconfig.BuildNumber.split('.').map((s) => parseInt(s, 10));
-            const verHookNotCalled = (version[0] === 6) && (version[1] >= 6);
+            const verHookNotCalled = (version[0] > 6) || (version[0] === 6 && version[1] >= 6);
             postUpdateSupported = postUpdateSupported && !verHookNotCalled;
         }
         setE2EEPostUpdateSupported(postUpdateSupported);
