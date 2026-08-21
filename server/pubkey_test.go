@@ -27,8 +27,10 @@ func SerializePubKey(x *big.Int, y *big.Int) []byte {
 }
 
 func GenerateValidPubKey() PubKey {
-	_, x0, y0, _ := elliptic.GenerateKey(ECCurve, rand.Reader)
-	_, x1, y1, _ := elliptic.GenerateKey(ECCurve, rand.Reader)
+	// See the nolint comment on ValidateECPoint's use of the same deprecated
+	// crypto/elliptic APIs in pubkey.go for why this isn't migrated here too.
+	_, x0, y0, _ := elliptic.GenerateKey(ECCurve, rand.Reader) //nolint:staticcheck
+	_, x1, y1, _ := elliptic.GenerateKey(ECCurve, rand.Reader) //nolint:staticcheck
 	return PubKey{
 		SerializePubKey(x0, y0),
 		SerializePubKey(x1, y1),

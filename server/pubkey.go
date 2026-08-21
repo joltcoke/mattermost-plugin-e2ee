@@ -64,14 +64,21 @@ func ValidateECPoint(data []byte) *ECPoint {
 		return nil
 	}
 
-	if !ECCurve.IsOnCurve(&x, &y) {
+	// crypto/elliptic's low-level Curve methods are deprecated since Go 1.21
+	// in favor of crypto/ecdh, which does its own on-curve check - but this
+	// function also does the small-subgroup check below (N*P == 0), citing
+	// https://neilmadden.blog/2017/05/17/so-how-do-you-validate-nist-ecdh-public-keys/,
+	// which crypto/ecdh doesn't expose an equivalent for. Migrating this
+	// deliberately, security-sensitive validation deserves its own reviewed
+	// change, not a drive-by fix bundled into a dependency/Go-version bump.
+	if !ECCurve.IsOnCurve(&x, &y) { //nolint:staticcheck
 		return nil
 	}
 
 	// Check that N*P == 0
 	Nbytes := make([]byte, CL)
 	N.FillBytes(Nbytes)
-	tx, ty := ECCurve.ScalarMult(&x, &y, Nbytes)
+	tx, ty := ECCurve.ScalarMult(&x, &y, Nbytes) //nolint:staticcheck
 	if tx.Cmp(zero) != 0 || ty.Cmp(zero) != 0 {
 		return nil
 	}
