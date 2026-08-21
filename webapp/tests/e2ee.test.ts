@@ -2,6 +2,7 @@
 
 import {webcrypto} from '../src/webcrypto';
 import {EncryptedP2PMessage, PrivateKeyMaterial, PublicKeyMaterial, getPubkeyID, E2EEValidationError, isEncryptedP2PMessageJSON} from '../src/e2ee';
+import {arrayBufferEqual} from '../src/utils';
 
 const b64 = require('base64-arraybuffer');
 const subtle = webcrypto.subtle;
@@ -14,6 +15,11 @@ test('e2ee/EncryptedP2PMessage', async () => {
 
     // u0 sends a message to itself, u1 & u2
     const msg = Buffer.from('hello world!', 'ascii');
+
+    // Buffer.from() for a string this short is backed by Node's shared
+    // Buffer pool, so msg.buffer is the whole pool, not just these bytes;
+    // slice out just the bytes msg actually views for comparisons below.
+    const msgBuf = msg.buffer.slice(msg.byteOffset, msg.byteOffset + msg.byteLength);
     const encrMsg = await EncryptedP2PMessage.encrypt(msg, u0, [u0.pubKey(), u1.pubKey(), u2.pubKey()]);
 
     // Verify the message with u0's public key
@@ -23,11 +29,11 @@ test('e2ee/EncryptedP2PMessage', async () => {
     for (const key of [u0, u1, u2]) {
         // Decrypt the message with the user's private key
         const decrMsg = await encrMsg.decrypt(key);
-        expect(decrMsg).toStrictEqual(msg.buffer);
+        expect(arrayBufferEqual(decrMsg, msgBuf)).toStrictEqual(true);
 
         // Do the same with the verifyAndDecrypt API
         const decrMsg2 = await encrMsg.verifyAndDecrypt(u0.pubKey(), key);
-        expect(decrMsg2).toStrictEqual(msg.buffer);
+        expect(arrayBufferEqual(decrMsg2, msgBuf)).toStrictEqual(true);
     }
 
     // This new user can't decrypt data
@@ -86,17 +92,22 @@ test('e2ee/jsonPub', async () => {
 
     // Encrypt a message by own for recv
     const msg = Buffer.from('hello world!', 'ascii');
+
+    // Buffer.from() for a string this short is backed by Node's shared
+    // Buffer pool, so msg.buffer is the whole pool, not just these bytes;
+    // slice out just the bytes msg actually views for comparisons below.
+    const msgBuf = msg.buffer.slice(msg.byteOffset, msg.byteOffset + msg.byteLength);
     const encrMsg = await EncryptedP2PMessage.encrypt(msg, own, [recvPub2]);
 
     // And decrypt
     const decrMsg = await encrMsg.decrypt(recv);
-    expect(decrMsg).toStrictEqual(msg.buffer);
+    expect(arrayBufferEqual(decrMsg, msgBuf)).toStrictEqual(true);
 
     // Now, json back & forth the decrypted message, and try to decript it
     const encrMsgJson = await encrMsg.jsonable();
     const encrMsg2 = await EncryptedP2PMessage.fromJsonable(encrMsgJson);
     const decrMsg2 = await encrMsg2.decrypt(recv);
-    expect(decrMsg2).toStrictEqual(msg.buffer);
+    expect(arrayBufferEqual(decrMsg2, msgBuf)).toStrictEqual(true);
 });
 
 test('e2ee/jsonPriv', async () => {
