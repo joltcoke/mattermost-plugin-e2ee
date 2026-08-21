@@ -151,8 +151,6 @@ jobs:
           npm install
 
       - name: Build Plugin Bundle
-        env:
-          NODE_OPTIONS: --openssl-legacy-provider
         run: make dist
 
       - name: Generate Release Notes
