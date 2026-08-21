@@ -6,7 +6,7 @@ const PLUGIN_ID = require('../plugin.json').id;
 
 const NPM_TARGET = process.env.npm_lifecycle_event; //eslint-disable-line no-process-env
 let mode = 'production';
-let devtool = '';
+let devtool = false;
 if (NPM_TARGET === 'debug' || NPM_TARGET === 'debug:watch') {
     mode = 'development';
     devtool = 'source-map';
@@ -90,12 +90,8 @@ module.exports = {
         'prop-types': 'PropTypes',
         'react-bootstrap': 'ReactBootstrap',
         'react-router-dom': 'ReactRouterDom',
-        'fake-indexeddb': {
-            commonjs: 'fake-indexeddb',
-        },
-        crypto: {
-            commonjs: 'crypto',
-        },
+        'fake-indexeddb': 'commonjs fake-indexeddb',
+        crypto: 'commonjs crypto',
     },
     output: {
         devtoolNamespace: PLUGIN_ID,
