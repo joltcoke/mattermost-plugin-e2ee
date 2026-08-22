@@ -3,6 +3,7 @@ import type {Store} from 'redux';
 
 import type {Channel} from '@mattermost/types/channels';
 import type {Post} from '@mattermost/types/posts';
+import type {GlobalState} from '@mattermost/types/store';
 import type {UserProfile} from '@mattermost/types/users';
 
 import * as UserActions from 'mattermost-redux/actions/users';
@@ -24,14 +25,22 @@ import {sendDesktopNotification} from './notification_actions';
 import {shouldNotify} from './notifications';
 import {AppPrivKey} from './privkey';
 import {pubkeyStore, getNewChannelPubkeys, storeChannelPubkeys} from './pubkeys_storage';
-import {selectPubkeys, selectPrivkey} from './selectors';
+import {getPluginState, selectPubkeys, selectPrivkey} from './selectors';
+import {KEYLOCK_OPEN_APPBAR_URI, KEYLOCK_CLOSED_APPBAR_URI} from './svgs';
 import type {MyActionResult, PubKeysState} from './types';
 import type {PluginRegistry, ContextArgs} from './types/mattermost-webapp';
 import {observeStore, isValidUsername} from './utils';
 
+function selectCurrentChannelEncrMethod(state: GlobalState): string {
+    const chanID = getCurrentChannelId(state);
+    return getPluginState(state).chansEncrMethod?.get(chanID) || E2EE_CHAN_ENCR_METHOD_NONE;
+}
+
 export default class E2EEHooks {
     store: Store;
     getProfilesInChannel: ReturnType<typeof makeGetProfilesInChannel>;
+    registry!: PluginRegistry;
+    appBarComponentId: string | null = null;
 
     constructor(store: Store) {
         this.store = store;
@@ -49,6 +58,8 @@ export default class E2EEHooks {
     }
 
     register(registry: PluginRegistry) {
+        this.registry = registry;
+
         registry.registerMessageWillBePostedHook(this.messageWillBePosted.bind(this));
         if (getE2EEPostUpdateSupported()) {
             registry.registerMessageWillBeUpdatedHook(this.messageWillBeUpdated.bind(this));
@@ -65,6 +76,42 @@ export default class E2EEHooks {
             <Icon/>,
             this.toggleEncryption.bind(this),
             'Toggle channel encryption',
+            'Toggle channel encryption',
+        );
+
+        // App Bar is the v7.0+ replacement location for the channel header
+        // plugin icon (https://github.com/quarkslab/mattermost-plugin-e2ee/issues/23).
+        // Registered in addition to, not instead of, the channel header
+        // button above so older servers keep working. Unlike the channel
+        // header, App Bar only accepts a static icon URL rather than a live
+        // React component, so we unregister/re-register with an updated
+        // icon whenever the current channel's effective encryption state
+        // changes, rather than rendering a component that reacts on its own.
+        observeStore(this.store, selectCurrentChannelEncrMethod, this.updateAppBarIcon.bind(this));
+
+        // selectCurrentChannelEncrMethod only reads the cached status; unlike
+        // the channel header's Icon component (which fetches on mount via
+        // useEffect), nothing else actively populates that cache for a
+        // channel that hasn't been fetched yet, so a never-before-viewed
+        // channel would default to "not encrypted" and never get corrected.
+        // Actively fetch (self-caching, so a no-op if already known) on every
+        // channel switch; getChannelEncryptionMethod dispatching
+        // RECEIVED_ENCRYPTION_STATUS is what the watcher above reacts to.
+        observeStore(this.store, getCurrentChannelId, this.fetchChannelEncryptionMethod.bind(this));
+    }
+
+    private async fetchChannelEncryptionMethod(_store: Store, chanID: string) {
+        await this.dispatch(getChannelEncryptionMethod(chanID));
+    }
+
+    private async updateAppBarIcon(_store: Store, method: string) {
+        const isEncrypted = method !== E2EE_CHAN_ENCR_METHOD_NONE;
+        if (this.appBarComponentId !== null) {
+            this.registry.unregisterComponent(this.appBarComponentId);
+        }
+        this.appBarComponentId = this.registry.registerAppBarComponent(
+            isEncrypted ? KEYLOCK_CLOSED_APPBAR_URI : KEYLOCK_OPEN_APPBAR_URI,
+            this.toggleEncryption.bind(this),
             'Toggle channel encryption',
         );
     }
