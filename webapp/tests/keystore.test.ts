@@ -19,7 +19,7 @@ test('keystore/store_read', async () => {
 
     const ks = await KeyStore.open();
     await ks.saveKey('a', key);
-    const key_loaded = await ks.loadKey('a');
+    await ks.loadKey('a');
 
     /*expect(key_loaded.publicKey).toStrictEqual(key.publicKey)
 

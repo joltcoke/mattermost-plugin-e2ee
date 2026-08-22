@@ -1,5 +1,6 @@
-import {Store} from 'redux';
-import {GlobalState} from 'mattermost-redux/types/store';
+import type {Store} from 'redux';
+
+import type {GlobalState} from 'mattermost-redux/types/store';
 
 export const isNode = typeof process !== 'undefined' &&
   process.versions != null &&
@@ -63,12 +64,12 @@ export function observeStore<T>(store: Store, select: (s: GlobalState) => T, onC
     return unsubscribe;
 }
 
-export function debouncedMerge<T, R>(func: (a: Array<T>) => Promise<R>, reducer: (res: R, org: Array<T>) => R, wait: number): (a: Array<T>) => Promise<R> {
+export function debouncedMerge<T, R>(func: (a: T[]) => Promise<R>, reducer: (res: R, org: T[]) => R, wait: number): (a: T[]) => Promise<R> {
     const merged = new Set<T>();
     let timeout: any = null;
-    let cbs_success: any = [];
-    let cbs_reject: any = [];
-    return async (arg: Array<T>): Promise<R> => {
+    let cbsSuccess: any = [];
+    let cbsReject: any = [];
+    return async (arg: T[]): Promise<R> => {
         for (const v of arg) {
             merged.add(v);
         }
@@ -82,30 +83,30 @@ export function debouncedMerge<T, R>(func: (a: Array<T>) => Promise<R>, reducer:
                 // call, hence ending up in a race condition!
                 // We then clear this shared state so that we can properly
                 // register the next round.
-                const local_cbs_success = [...cbs_success];
-                const local_cbs_reject = [...cbs_reject];
-                const local_merged = [...merged];
+                const localCbsSuccess = [...cbsSuccess];
+                const localCbsReject = [...cbsReject];
+                const localMerged = [...merged];
                 merged.clear();
-                cbs_success = [];
-                cbs_reject = [];
-                func(local_merged).then((res) => {
-                    for (const cb of local_cbs_success) {
+                cbsSuccess = [];
+                cbsReject = [];
+                func(localMerged).then((res) => {
+                    for (const cb of localCbsSuccess) {
                         cb(res);
                     }
                 }).catch((e) => {
-                    for (const cb of local_cbs_reject) {
+                    for (const cb of localCbsReject) {
                         cb(e);
                     }
                 });
             };
-            cbs_success.push((res: R) => {
+            cbsSuccess.push((res: R) => {
                 try {
                     resolve(reducer(res, arg));
                 } catch (e) {
                     reject(e);
                 }
             });
-            cbs_reject.push((e: any) => {
+            cbsReject.push((e: any) => {
                 reject(e);
             });
             if (timeout === null) {
@@ -115,7 +116,7 @@ export function debouncedMerge<T, R>(func: (a: Array<T>) => Promise<R>, reducer:
     };
 }
 
-export function debouncedMergeMapArrayReducer<K, V>(funcres: Map<K, V>, keys: Array<K>) {
+export function debouncedMergeMapArrayReducer<K, V>(funcres: Map<K, V>, keys: K[]) {
     const ret = new Map();
     for (const v of keys) {
         ret.set(v, funcres.get(v));

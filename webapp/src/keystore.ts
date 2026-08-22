@@ -35,7 +35,7 @@ export class KeyStore {
         this.objectStoreName = objectStoreName;
     }
 
-    static async open(userID: string): Promise<KeyStore> {
+    static async open(_userID: string): Promise<KeyStore> {
         if (navigator.storage && navigator.storage.persist) {
             await navigator.storage.persist();
         }
@@ -47,11 +47,11 @@ export class KeyStore {
             const objectStoreName = 'keys';
 
             const req = indexedDB.open(dbName, 2);
-            req.onsuccess = (evt) => {
+            req.onsuccess = (_evt) => {
                 const db = req.result;
                 fulfill(new KeyStore(db, objectStoreName));
             };
-            req.onerror = (evt) => {
+            req.onerror = (_evt) => {
                 reject(req.error);
             };
             req.onblocked = () => {
@@ -60,7 +60,7 @@ export class KeyStore {
 
             // If the database is being created or upgraded to a new version,
             // see if the object store and its indexes need to be created.
-            req.onupgradeneeded = (evt) => {
+            req.onupgradeneeded = (_evt) => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains(objectStoreName)) {
                     db.createObjectStore(objectStoreName, {keyPath: 'name'});
@@ -76,13 +76,13 @@ export class KeyStore {
             }
 
             const transaction = this.db.transaction([this.objectStoreName], 'readwrite');
-            transaction.onerror = (evt) => {
+            transaction.onerror = (_evt) => {
                 reject(transaction.error);
             };
-            transaction.onabort = (evt) => {
+            transaction.onabort = (_evt) => {
                 reject(transaction.error);
             };
-            transaction.oncomplete = (evt) => {
+            transaction.oncomplete = (_evt) => {
                 fulfill(null);
             };
 
@@ -107,7 +107,7 @@ export class KeyStore {
 
             const request = objectStore.get(name);
 
-            request.onsuccess = (evt) => {
+            request.onsuccess = (_evt) => {
                 if (typeof request.result === 'undefined') {
                     reject(new KeyStoreError('unknown key'));
                 } else {
@@ -115,7 +115,7 @@ export class KeyStore {
                 }
             };
 
-            request.onerror = (evt) => {
+            request.onerror = (_evt) => {
                 reject(request.error);
             };
         });

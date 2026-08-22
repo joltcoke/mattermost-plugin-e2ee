@@ -1,9 +1,9 @@
 // From https://github.com/mickmister/mattermost-plugin-stonks/blob/33c7a5eaeb455aabe55d2e95daa620633cd195a3/webapp/src/registry.ts
-import React from 'react';
+import type React from 'react';
 
-import {Post} from 'mattermost-redux/types/posts';
-import {FileInfo} from 'mattermost-redux/types/files';
-import {Channel} from 'mattermost-redux/types/channels';
+import type {Channel} from 'mattermost-redux/types/channels';
+import type {FileInfo} from 'mattermost-redux/types/files';
+import type {Post} from 'mattermost-redux/types/posts';
 
 export type UniqueIdentifier = string;
 export type ContextArgs = {channel_id: string};
@@ -77,7 +77,7 @@ export interface PluginRegistry {
     // - toggleable - A boolean indicating if the embed view should be collapsable
     // Returns a unique identifier.
     registerPostWillRenderEmbedComponent(
-        match: (embed: {type: string, url: string, data?: {}}) => string,
+        match: (embed: {type: string; url: string; data?: {}}) => string,
         component: React.ElementType,
         toggleable: boolean
     ): UniqueIdentifier;
@@ -119,7 +119,7 @@ export interface PluginRegistry {
         action: () => void,
         filter: (post: Post) => boolean,
     ): {
-        id: UniqueIdentifier,
+        id: UniqueIdentifier;
         rootRegisterMenuItem: (
             text: React.ReactNode,
             action: () => void,
@@ -154,8 +154,8 @@ export interface PluginRegistry {
         inFiles: File[],
         upload: (files: FileInfo) => void
     ) => {
-        message: string | null,
-        files: FileInfo[],
+        message: string | null;
+        files: FileInfo[];
     }): UniqueIdentifier;
 
     // Unregister a component, action or hook using the unique identifier returned after registration.
@@ -260,8 +260,8 @@ export interface PluginRegistry {
 
     registerSlashCommandWillBePostedHook(
         hook: (message: string, args: ContextArgs) => (
-            {message: string, args: ContextArgs} | {} |
-            Promise<{message: string, args: ContextArgs} | {}>
+            {message: string; args: ContextArgs} | {} |
+            Promise<{message: string; args: ContextArgs} | {}>
         )
     ): UniqueIdentifier;
 
@@ -284,7 +284,7 @@ export interface PluginRegistry {
     registerFilePreviewComponent(
         override: (fileInfos: FileInfo[], post: Post) => boolean,
         component: React.ElementType
-    ): UniqueIdentifier
+    ): UniqueIdentifier;
 
     registerTranslations(getTranslationsForLocale: (locale: string) => {[translationID: string]: string}): void;
 
@@ -329,10 +329,10 @@ export interface PluginRegistry {
         component: React.ElementType,
         title: React.ReactNode
     ): {
-        id: UniqueIdentifier,
-        showRHSPlugin: {},
-        hideRHSPlugin: {},
-        toggleRHSPlugin: {}
+        id: UniqueIdentifier;
+        showRHSPlugin: {};
+        hideRHSPlugin: {};
+        toggleRHSPlugin: {};
     };
 
     // Register a Needs Team component by providing a route past /:team/:pluginId/ to be displayed at.

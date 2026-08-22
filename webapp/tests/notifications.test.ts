@@ -1,4 +1,4 @@
-import {UserProfile} from 'mattermost-redux/types/users';
+import type {UserProfile} from 'mattermost-redux/types/users';
 
 import {shouldNotify} from '../src/notifications';
 

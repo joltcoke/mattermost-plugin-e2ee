@@ -1,10 +1,11 @@
 /* eslint-disable global-require */
 
-import {Post} from 'mattermost-redux/types/posts.js';
+import type {Post} from 'mattermost-redux/types/posts.js';
 
-import {PrivateKeyMaterial, PublicKeyMaterial, EncryptedP2PMessage, EncryptedP2PMessageJSON} from './e2ee';
-import {isNode} from './utils';
 import {E2EE_POST_TYPE} from './constants';
+import type {PrivateKeyMaterial, PublicKeyMaterial, EncryptedP2PMessageJSON} from './e2ee';
+import {EncryptedP2PMessage} from './e2ee';
+import {isNode} from './utils';
 
 // TODO: put this mess somewhere else, or do it with helpers
 let UtilTextEncoder: typeof TextEncoder;
@@ -19,7 +20,7 @@ if (isNode) {
     UtilTextDecoder = TextDecoder;
 }
 
-export async function encryptPost(post: Post, privkey: PrivateKeyMaterial, pubkeys: Array<PublicKeyMaterial>) {
+export async function encryptPost(post: Post, privkey: PrivateKeyMaterial, pubkeys: PublicKeyMaterial[]) {
     const postMsg = new UtilTextEncoder().encode(post.message);
     const encrMsg = await EncryptedP2PMessage.encrypt(postMsg.buffer, privkey, pubkeys);
     const encrMsgJson = await encrMsg.jsonable(true /* encb64 */);
@@ -29,7 +30,7 @@ export async function encryptPost(post: Post, privkey: PrivateKeyMaterial, pubke
     // TODO: AG: TS isn't happy here because PostType is a fixed set of string
     // literals. I don't see how we can extend PostType, so ignore this error
     // for now.
-    // @ts-ignore
+    // @ts-expect-error post.type is readonly in mattermost-redux types
     post.type = E2EE_POST_TYPE;
 }
 

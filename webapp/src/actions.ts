@@ -1,15 +1,12 @@
-import {ActionFunc, DispatchFunc, GetStateFunc, ActionResult} from 'mattermost-redux/types/actions';
-import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 import {PostTypes} from 'mattermost-redux/action_types';
+import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
+import type {ActionFunc, DispatchFunc, GetStateFunc, ActionResult} from 'mattermost-redux/types/actions';
 
 import {PubKeyTypes, EncrStatutTypes, ImportModalTypes, PrivKeyTypes} from './action_types';
 import {APIClient} from './client';
-import {StateID} from './constants';
-import {PrivateKeyMaterial, PublicKeyMaterial} from './e2ee';
-import {getPluginState, selectPubkeys} from './selectors';
+import type {PrivateKeyMaterial, PublicKeyMaterial} from './e2ee';
 import manifest from './manifest';
-
-const CACHE_PUBKEY_TIMEOUT = 5 * 1000; // 5s
+import {getPluginState, selectPubkeys} from './selectors';
 
 export function getPubKeys(userIds: string[]): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc): Promise<ActionResult> => {
@@ -17,9 +14,9 @@ export function getPubKeys(userIds: string[]): ActionFunc {
         const ret = new Map<string, PublicKeyMaterial>();
         const setIds = new Set(userIds);
 
-        const state_pubkeys = selectPubkeys(getState());
+        const statePubkeys = selectPubkeys(getState());
         for (const userId of userIds) {
-            const cached = state_pubkeys.get(userId);
+            const cached = statePubkeys.get(userId);
             if (typeof cached === 'undefined') {
                 continue;
             }
@@ -51,7 +48,7 @@ export function getPubKeys(userIds: string[]): ActionFunc {
 
 export function getChannelEncryptionMethod(chanID: string): ActionFunc {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
-        // @ts-ignore
+        // @ts-expect-error state[StateID] indexing is not typed on GlobalState
         const method = getPluginState(getState()).chansEncrMethod.get(chanID) || null;
         if (method != null) {
             return {data: method};
@@ -98,7 +95,7 @@ export function sendEphemeralPost(message: string, channelId: string): ActionFun
 }
 
 export function openImportModal(): ActionFunc {
-    return (dispatch: DispatchFunc, getState: GetStateFunc) => {
+    return (dispatch: DispatchFunc, _getState: GetStateFunc) => {
         dispatch({
             type: ImportModalTypes.IMPORT_MODAL_OPEN,
             data: {},
@@ -108,7 +105,7 @@ export function openImportModal(): ActionFunc {
 }
 
 export function closeImportModal(): ActionFunc {
-    return (dispatch: DispatchFunc, getState: GetStateFunc) => {
+    return (dispatch: DispatchFunc, _getState: GetStateFunc) => {
         dispatch({
             type: ImportModalTypes.IMPORT_MODAL_CLOSE,
             data: {},

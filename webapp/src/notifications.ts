@@ -1,16 +1,15 @@
-import {UserProfile} from 'mattermost-redux/types/users';
-import {Post} from 'mattermost-redux/types/posts';
-
 import {isMacApp} from 'user_agent';
+
+import type {UserProfile} from 'mattermost-redux/types/users';
 
 // regular expression from mattermost-server/app/command.go. Replace :alnum: by
 // [A-Za-z0-9]. /g is necessary to be able to match all mentions.
 const atMentionRegexp = /\B@([A-Za-z0-9][A-Za-z0-9\\.\-_:]*)(\s|$)/g;
 
 export function shouldNotify(msg: string, user: UserProfile) {
-    const notify_props = user.notify_props;
+    const notifyProps = user.notify_props;
 
-    const mentionChannel = notify_props.channel === 'true';
+    const mentionChannel = notifyProps.channel === 'true';
     const username = user.username;
     const mentions = msg.matchAll(atMentionRegexp);
     for (const m of mentions) {
@@ -19,7 +18,7 @@ export function shouldNotify(msg: string, user: UserProfile) {
             return mentionChannel;
         }
         if (name === 'here') {
-            return mentionChannel && notify_props.push_status === 'online';
+            return mentionChannel && notifyProps.push_status === 'online';
         }
         if (m[1] === username) {
             return true;
@@ -29,26 +28,26 @@ export function shouldNotify(msg: string, user: UserProfile) {
     // See
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#comparing_strings
     // as to why toUpperCase is used (and not toLowerCase).
-    const mention_keys = new Set();
-    for (const m of notify_props.mention_keys.split(',')) {
+    const mentionKeys = new Set();
+    for (const m of notifyProps.mention_keys.split(',')) {
         const s = m.trim();
         if (s.length > 0) {
-            mention_keys.add(s.toUpperCase());
+            mentionKeys.add(s.toUpperCase());
         }
     }
 
     // First name check is case **sensitive**
-    const check_fn = notify_props.first_name === 'true';
-    if (mention_keys.size === 0 && !check_fn) {
+    const checkFn = notifyProps.first_name === 'true';
+    if (mentionKeys.size === 0 && !checkFn) {
         return false;
     }
 
     const words = msg.split(/\s+/);
     for (const w of words) {
-        if (mention_keys.has(w.toUpperCase())) {
+        if (mentionKeys.has(w.toUpperCase())) {
             return true;
         }
-        if (check_fn && w === user.first_name) {
+        if (checkFn && w === user.first_name) {
             return true;
         }
     }

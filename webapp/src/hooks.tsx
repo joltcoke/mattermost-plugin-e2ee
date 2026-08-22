@@ -1,49 +1,49 @@
 import React from 'react';
-import {Store} from 'redux';
-import {getCurrentUser, getCurrentUserId, makeGetProfilesInChannel, getUser} from 'mattermost-redux/selectors/entities/users';
-import {getCurrentChannelId} from 'mattermost-redux/selectors/entities/common';
-import {getChannel} from 'mattermost-redux/selectors/entities/channels';
-import {Post} from 'mattermost-redux/types/posts';
-import {Channel} from 'mattermost-redux/types/channels';
-import {UserProfile} from 'mattermost-redux/types/users';
-import {Client4} from 'mattermost-redux/client';
-import * as UserActions from 'mattermost-redux/actions/users';
+import type {Store} from 'redux';
 
-import Icon from './components/icon';
-import {getPubKeys, getChannelEncryptionMethod, sendEphemeralPost, openImportModal} from './actions';
+import * as UserActions from 'mattermost-redux/actions/users';
+import {getChannel} from 'mattermost-redux/selectors/entities/channels';
+import {getCurrentChannelId} from 'mattermost-redux/selectors/entities/common';
+import {getCurrentUser, getCurrentUserId, makeGetProfilesInChannel, getUser} from 'mattermost-redux/selectors/entities/users';
+import type {Channel} from 'mattermost-redux/types/channels';
+import type {Post} from 'mattermost-redux/types/posts';
+import type {UserProfile} from 'mattermost-redux/types/users';
+
 import {EncrStatutTypes, EventTypes, PubKeyTypes} from './action_types';
+import {getPubKeys, getChannelEncryptionMethod, sendEphemeralPost, openImportModal} from './actions';
 import {APIClient, GPGBackupDisabledError} from './client';
+import {getE2EEPostUpdateSupported} from './compat';
+import Icon from './components/icon';
 import {E2EE_CHAN_ENCR_METHOD_NONE, E2EE_CHAN_ENCR_METHOD_P2P, E2EE_POST_TYPE} from './constants';
 // eslint-disable-next-line import/no-unresolved
-import {PluginRegistry, ContextArgs} from './types/mattermost-webapp';
-import {selectPubkeys, selectPrivkey, selectKS} from './selectors';
-import {msgCache} from './msg_cache';
-import {AppPrivKey} from './privkey';
+import type {PublicKeyMaterial} from './e2ee';
 import {encryptPost, decryptPost, isEncryptedPost} from './e2ee_post';
-import {PublicKeyMaterial} from './e2ee';
-import {observeStore, isValidUsername} from './utils';
-import {MyActionResult, PubKeysState} from './types';
-import {pubkeyStore, getNewChannelPubkeys, storeChannelPubkeys} from './pubkeys_storage';
-import {getE2EEPostUpdateSupported} from './compat';
-import {shouldNotify} from './notifications';
+import {msgCache} from './msg_cache';
 import {sendDesktopNotification} from './notification_actions';
+import {shouldNotify} from './notifications';
+import {AppPrivKey} from './privkey';
+import {pubkeyStore, getNewChannelPubkeys, storeChannelPubkeys} from './pubkeys_storage';
+import {selectPubkeys, selectPrivkey} from './selectors';
+import type {MyActionResult, PubKeysState} from './types';
+import type {PluginRegistry, ContextArgs} from './types/mattermost-webapp';
+import {observeStore, isValidUsername} from './utils';
 
 export default class E2EEHooks {
-    store: Store
-    getProfilesInChannel: ReturnType<typeof makeGetProfilesInChannel>
+    store: Store;
+    getProfilesInChannel: ReturnType<typeof makeGetProfilesInChannel>;
 
     constructor(store: Store) {
         this.store = store;
         this.getProfilesInChannel = makeGetProfilesInChannel();
 
         observeStore(store, selectPubkeys, this.checkPubkeys.bind(this));
-        observeStore(store, selectPrivkey, async (s: any, v: any) => {
+        observeStore(store, selectPrivkey, async (_s: any, _v: any) => {
             msgCache.clear();
         });
-        observeStore(store, getCurrentUserId, async (s: any, v: any) => {
+        observeStore(store, getCurrentUserId, async (_s: any, _v: any) => {
             msgCache.clear();
 
-            // @ts-ignore
+            // @ts-expect-error dispatch() typing does not account for thunk actions
             await store.dispatch(AppPrivKey.init(store));
         });
     }
@@ -94,12 +94,12 @@ export default class E2EEHooks {
             }
             let decrMsg = msgCache.get(post);
             if (decrMsg === null) {
-                const sender_uid = post.user_id;
-                const {data, error} = await this.dispatch(getPubKeys([sender_uid]));
+                const senderUid = post.user_id;
+                const {data, error} = await this.dispatch(getPubKeys([senderUid]));
                 if (error) {
                     throw error;
                 }
-                const senderkey = data.get(sender_uid) || null;
+                const senderkey = data.get(senderUid) || null;
                 if (senderkey === null) {
                     return;
                 }
@@ -161,7 +161,7 @@ export default class E2EEHooks {
         this.setChannelEncryptionMethod(chanID, method === 'none' ? 'p2p' : 'none');
     }
 
-    private async handleInit(cmdArgs: Array<string>, ctxArgs: ContextArgs) {
+    private async handleInit(cmdArgs: string[], ctxArgs: ContextArgs) {
         let msg;
         const force = cmdArgs[0] === '--force';
         const keyInBrowser = AppPrivKey.exists(this.store.getState());
@@ -175,7 +175,7 @@ export default class E2EEHooks {
             if (error) {
                 msg = 'Error while generating: ' + error;
             } else {
-                const {privkey, backupGPG, backupClear} = data;
+                const {backupGPG, backupClear} = data;
 
                 // Push the public key and backup to the server
                 msg = 'A new private key has been generated. ';
@@ -236,7 +236,6 @@ export default class E2EEHooks {
             return {};
         }
         case 'import': {
-            // @ts-ignore
             await this.dispatch(openImportModal());
             return {};
         }
@@ -245,12 +244,11 @@ export default class E2EEHooks {
     }
 
     private sendEphemeralPost(msg: string, chanID: string) {
-        // @ts-ignore
         this.dispatch(sendEphemeralPost(msg, chanID));
     }
 
     private async getUserIdsInChannel(chanID: string): Promise<MyActionResult> {
-        const {data, error} = await this.dispatch(UserActions.getProfilesInChannel(chanID, 0));
+        const {error} = await this.dispatch(UserActions.getProfilesInChannel(chanID, 0));
         if (error) {
             return {error};
         }
@@ -263,7 +261,6 @@ export default class E2EEHooks {
         const chanID = post.channel_id;
         const lastMethod = this.getLastEncryptionMethodForChannel(chanID);
 
-        // @ts-ignore
         const {data: method, error: errEM} = await this.dispatch(getChannelEncryptionMethod(chanID));
         if (errEM) {
             return {error: {message: 'Unable to get channel encryption status: ' + errEM}};
@@ -286,7 +283,6 @@ export default class E2EEHooks {
                 return {error: {message: 'Unable to get the list of users in this channel: ' + errUsers}};
             }
 
-            // @ts-ignore
             const {data: pubkeys, error: errPK} = await this.dispatch(getPubKeys(users));
             if (errPK) {
                 return {error: {message: 'Unable to get the public keys of the channel members: ' + errPK}};
@@ -301,7 +297,7 @@ export default class E2EEHooks {
             }
             const orgMsg = post.message;
 
-            const pubkeyValues: Array<PublicKeyMaterial> = Array.from(pubkeys.values());
+            const pubkeyValues: PublicKeyMaterial[] = Array.from(pubkeys.values());
 
             // Launch encryption in a promise, as in nominal operation we always need its result.
             const encryptProm = encryptPost(post, key, pubkeyValues);
@@ -313,7 +309,7 @@ export default class E2EEHooks {
                     return {error: {message: 'Inconsistency in the current channel users list. This can be due to a malicious/compromised server. Refusing to encrypt messages!'}};
                 }
                 let msg = 'Messages are now encrypted for these new recipients:';
-                for (const [userID, _] of newPubkeys) {
+                for (const [userID] of newPubkeys) {
                     msg += ' @' + getUser(this.store.getState(), userID).username;
                 }
                 this.sendEphemeralPost(msg, chanID);
@@ -349,9 +345,9 @@ export default class E2EEHooks {
         // Having twice in a row the same 2**32 integer has a probability of
         // 2**-32.
         //
-        // @ts-ignore
+        // @ts-expect-error ret union type is not narrowed here
         if ((typeof ret.post !== 'undefined') && isEncryptedPost(ret.post)) {
-            // @ts-ignore
+            // @ts-expect-error ret union type is not narrowed here
             ret.post.message += ' ' + Math.floor((2 ** 32) * Math.random()).toString();
         }
         return ret;
