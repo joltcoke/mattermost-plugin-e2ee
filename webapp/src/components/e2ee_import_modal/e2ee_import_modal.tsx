@@ -1,16 +1,16 @@
+import {AppPrivKeyIsDifferent} from 'privkey';
 import React from 'react';
 import {Modal} from 'react-bootstrap';
 
 import ConfirmModal from 'components/confirm_modal';
-import {AppPrivKeyIsDifferent} from 'privkey';
 
-import {E2EEImportModalProps} from './index';
+import type {E2EEImportModalProps} from './index';
 
 type E2EEImportModalState = {
-    privkey: string
-    errorMsg: string
-    showConfirmModal: boolean
-    showSuccess: boolean
+    privkey: string;
+    errorMsg: string;
+    showConfirmModal: boolean;
+    showSuccess: boolean;
 }
 
 export class E2EEImportModal extends React.Component<E2EEImportModalProps, E2EEImportModalState> {
@@ -32,8 +32,8 @@ export class E2EEImportModal extends React.Component<E2EEImportModalProps, E2EEI
     async onSubmit() {
         const backupGPG = this.state.privkey;
 
-        // @ts-ignore
-        const {data, error} = await this.props.actions.appPrivKeyImport(backupGPG, false /* force */);
+        // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
+        const {error} = await this.props.actions.appPrivKeyImport(backupGPG, false /* force */);
         if (error) {
             if (error instanceof AppPrivKeyIsDifferent) {
                 this.setState({showConfirmModal: true});
@@ -58,7 +58,7 @@ export class E2EEImportModal extends React.Component<E2EEImportModalProps, E2EEI
         });
     }
 
-    handleCancel(e: any) {
+    handleCancel(_e: any) {
         this.cleanup();
         this.props.actions.close();
     }
@@ -73,11 +73,11 @@ export class E2EEImportModal extends React.Component<E2EEImportModalProps, E2EEI
         this.props.actions.close();
     }
 
-    async handleConfirmImport(e: any) {
+    async handleConfirmImport(_e: any) {
         const backupGPG = this.state.privkey;
 
-        // @ts-ignore
-        const {data, error} = await this.props.actions.appPrivKeyImport(backupGPG, true /* force */);
+        // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
+        const {error} = await this.props.actions.appPrivKeyImport(backupGPG, true /* force */);
         if (error) {
             this.setState({errorMsg: error.message});
             return;

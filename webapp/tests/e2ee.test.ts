@@ -1,10 +1,9 @@
 /* eslint-disable no-await-in-loop */
 
-import {webcrypto} from '../src/webcrypto';
-import {EncryptedP2PMessage, PrivateKeyMaterial, PublicKeyMaterial, getPubkeyID, E2EEValidationError, isEncryptedP2PMessageJSON} from '../src/e2ee';
+import {EncryptedP2PMessage, PrivateKeyMaterial, PublicKeyMaterial, E2EEValidationError, isEncryptedP2PMessageJSON} from '../src/e2ee';
 import {arrayBufferEqual} from '../src/utils';
+import {webcrypto} from '../src/webcrypto';
 
-const b64 = require('base64-arraybuffer');
 const subtle = webcrypto.subtle;
 
 test('e2ee/EncryptedP2PMessage', async () => {

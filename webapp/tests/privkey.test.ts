@@ -1,22 +1,20 @@
-import * as openpgp from 'openpgp';
 import {jest} from '@jest/globals';
+import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 
 import {Client4} from 'mattermost-redux/client';
 import {ClientError} from 'mattermost-redux/client/client4';
 
-import configureStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
-
-import {AppPrivKey, AppPrivKeyIsDifferent} from '../src/privkey';
-import {APIClient} from '../src/client';
-import {PubKeyTypes, PrivKeyTypes, KSTypes} from '../src/action_types';
-import {PublicKeyMaterial, PrivateKeyMaterial} from '../src/e2ee';
-import {gpgBackupFormat} from '../src/backup_gpg';
-import {StateID} from '../src/constants';
-import {KeyStore} from '../src/keystore';
-import HKP from '../src/hkp';
-
 import {generateGPGKey, initOpenGPG, finiOpenGPG} from './helpers';
+
+import {PrivKeyTypes, KSTypes} from '../src/action_types';
+import {gpgBackupFormat} from '../src/backup_gpg';
+import {APIClient} from '../src/client';
+import {StateID} from '../src/constants';
+import {PublicKeyMaterial, PrivateKeyMaterial} from '../src/e2ee';
+import HKP from '../src/hkp';
+import {KeyStore} from '../src/keystore';
+import {AppPrivKey, AppPrivKeyIsDifferent} from '../src/privkey';
 
 function testConfigureStore(initialState = {}) {
     return configureStore([thunk])(initialState);
@@ -101,7 +99,7 @@ test('privkey/generateNoGPG', async () => {
 
     const {data, error} = await store.dispatch(AppPrivKey.generate());
     expect(error).toBeUndefined();
-    const {privkey, backupGPG, backupClear} = data;
+    const {privkey, backupGPG} = data;
     expect(backupGPG.error).not.toBeUndefined();
     expect(backupGPG.data).toBeUndefined();
 
@@ -157,7 +155,7 @@ pub:79885E33920840DA65EEE2013F3519E42C47C59D:1:2048:1567427747::
 
     const {data, error} = await store.dispatch(AppPrivKey.generate());
     expect(error).toBeUndefined();
-    const {privkey, backupGPG, backupClear} = data;
+    const {privkey, backupGPG} = data;
     expect(typeof backupGPG.data).toBe('string');
     expect(backupGPG.error).toBeUndefined();
 
@@ -198,7 +196,7 @@ test('privkey/generateWithGPGNoKeys', async () => {
 
     const {data, error} = await store.dispatch(AppPrivKey.generate());
     expect(error).toBeUndefined();
-    const {privkey, backupGPG, backupClear} = data;
+    const {privkey, backupGPG} = data;
     expect(backupGPG.data).toBeUndefined();
     expect(backupGPG.error).toStrictEqual('no valid key found');
 
@@ -246,6 +244,6 @@ test('privkey/importDifferent', async () => {
         });
 
     const backup = await gpgBackupFormat(privkey);
-    const {data, error} = await store.dispatch(AppPrivKey.import(backup, false));
+    const {error} = await store.dispatch(AppPrivKey.import(backup, false));
     expect(error).toBeInstanceOf(AppPrivKeyIsDifferent);
 });

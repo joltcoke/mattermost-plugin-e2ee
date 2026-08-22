@@ -1,7 +1,7 @@
 import {webcrypto} from 'webcrypto';
 
+import type {KeyStore} from './keystore';
 import {concatArrayBuffers, eqSet, arrayBufferEqual} from './utils';
-import {KeyStore} from './keystore';
 
 const b64 = require('base64-arraybuffer');
 
@@ -55,9 +55,9 @@ function fdecb64(fromb64: boolean) {
 }
 
 export class PublicKeyMaterial {
-    readonly ecdh: CryptoKey
-    readonly ecdsa: CryptoKey
-    cachedID: ArrayBuffer | null
+    readonly ecdh: CryptoKey;
+    readonly ecdsa: CryptoKey;
+    cachedID: ArrayBuffer | null;
 
     constructor(ecdh: CryptoKey, ecdsa: CryptoKey) {
         this.ecdh = ecdh;
@@ -88,9 +88,9 @@ export class PublicKeyMaterial {
         if (this.cachedID !== null) {
             return this.cachedID;
         }
-        const data_ecdh = subtle.exportKey('raw', this.ecdh);
-        const data_ecdsa = subtle.exportKey('raw', this.ecdsa);
-        const data = concatArrayBuffers(...await Promise.all([data_ecdh, data_ecdsa]));
+        const dataEcdh = subtle.exportKey('raw', this.ecdh);
+        const dataEcdsa = subtle.exportKey('raw', this.ecdsa);
+        const data = concatArrayBuffers(...await Promise.all([dataEcdh, dataEcdsa]));
         const ret = await subtle.digest('SHA-256', data);
         this.cachedID = ret;
         return ret;
@@ -104,9 +104,9 @@ export interface PrivateKeyMaterialJSON {
 }
 
 export class PrivateKeyMaterial {
-    readonly ecdh: CryptoKeyPair
-    readonly ecdsa: CryptoKeyPair
-    readonly pubkeyObj: PublicKeyMaterial
+    readonly ecdh: CryptoKeyPair;
+    readonly ecdsa: CryptoKeyPair;
+    readonly pubkeyObj: PublicKeyMaterial;
 
     static readonly JSON_FORMAT_VERSION = 1;
 
@@ -124,20 +124,20 @@ export class PrivateKeyMaterial {
     }
 
     static async create(exportable = false): Promise<PrivateKeyMaterial> {
-        const ecdh_key = subtle.generateKey({
+        const ecdhKey = subtle.generateKey({
             name: 'ECDH',
             namedCurve: CurveName,
         }, exportable, ['deriveBits']);
-        const ecdsa_key = subtle.generateKey({
+        const ecdsaKey = subtle.generateKey({
             name: 'ECDSA',
             namedCurve: CurveName,
         }, exportable, ['sign', 'verify']);
-        const keys = await Promise.all([ecdh_key, ecdsa_key]);
+        const keys = await Promise.all([ecdhKey, ecdsaKey]);
 
         return new PrivateKeyMaterial(keys[0], keys[1]);
     }
 
-    public async jsonable(tob64: boolean): Promise<PrivateKeyMaterialJSON> {
+    public async jsonable(_tob64: boolean): Promise<PrivateKeyMaterialJSON> {
         const ecdsaExport = await subtle.exportKey(PrivateKeyExportFormat, this.ecdsa.privateKey);
         const ecdhExport = await subtle.exportKey(PrivateKeyExportFormat, this.ecdh.privateKey);
         return {
@@ -205,9 +205,9 @@ export class PrivateKeyMaterial {
     }
 
     static async load(ks: KeyStore, userID: string): Promise<PrivateKeyMaterial> {
-        const ecdh_key = ks.loadKey('ecdh_' + userID);
-        const ecdsa_key = ks.loadKey('ecdsa_' + userID);
-        const values = await Promise.all([ecdh_key, ecdsa_key]);
+        const ecdhKey = ks.loadKey('ecdh_' + userID);
+        const ecdsaKey = ks.loadKey('ecdsa_' + userID);
+        const values = await Promise.all([ecdhKey, ecdsaKey]);
         return new PrivateKeyMaterial(values[0], values[1]);
     }
 
@@ -247,7 +247,7 @@ interface EncryptedP2PMessageJSONImpl<Bin extends B64OrBuf> {
     signature: Bin;
     iv: Bin;
     pubECDHE: Bin;
-    encryptedKey: [Bin, Bin][];
+    encryptedKey: Array<[Bin, Bin]>;
     encryptedData: Bin;
 }
 export type EncryptedP2PMessageJSON = EncryptedP2PMessageJSONImpl<B64Str> | EncryptedP2PMessageJSONImpl<ArrayBuffer>;
@@ -277,13 +277,13 @@ export function isEncryptedP2PMessageJSON(obj: any, hasb64 = true): obj is Encry
 }
 
 export class EncryptedP2PMessage {
-    signature!: ArrayBuffer
-    iv!: Uint8Array<ArrayBuffer>
-    pubECDHE!: CryptoKey
+    signature!: ArrayBuffer;
+    iv!: Uint8Array<ArrayBuffer>;
+    pubECDHE!: CryptoKey;
 
     // Map public key ID to encrypted AES key
-    encryptedKey!: EncryptedKeyTy
-    encryptedData!: ArrayBuffer
+    encryptedKey!: EncryptedKeyTy;
+    encryptedData!: ArrayBuffer;
 
     static readonly JSON_FORMAT_VERSION = 1;
 
@@ -299,7 +299,7 @@ export class EncryptedP2PMessage {
             {name: 'AES-KW'}, false, [usage]);
     }
 
-    static async encrypt(data: ArrayBuffer, sign: PrivateKeyMaterial, pubkeys: Array<PublicKeyMaterial>): Promise<EncryptedP2PMessage> {
+    static async encrypt(data: ArrayBuffer, sign: PrivateKeyMaterial, pubkeys: PublicKeyMaterial[]): Promise<EncryptedP2PMessage> {
         //assert(signkey.type == "private")
         const ret = new EncryptedP2PMessage();
         ret.iv = new Uint8Array(16);
@@ -314,7 +314,7 @@ export class EncryptedP2PMessage {
         // For each public key, generate a shared secret, and use the result to
         // encrypt msgAesKey.
         // We create one promise per key to exploit parallelism if possible.
-        const keysProm: Promise<EncryptedKeyWithIDTy>[] = [];
+        const keysProm: Array<Promise<EncryptedKeyWithIDTy>> = [];
         for (const pubkey of pubkeys) {
             const gen = async (): Promise<EncryptedKeyWithIDTy> => {
                 const pubkeyID = pubkey.id();
@@ -343,7 +343,7 @@ export class EncryptedP2PMessage {
         const encrKeys = new Uint8Array(encrKeysLen);
         new DataView(encrKeys.buffer).setUint32(0, nkeys, true /* littleEndian */);
         for (let i = 0; i < nkeys; ++i) {
-            const [id, _] = this.encryptedKey[i];
+            const [id] = this.encryptedKey[i];
             encrKeys.set(new Uint8Array(id), 4 + (i * PubKeyIDLen));
         }
         const encrMsgLen = new DataView(this.encryptedData).byteLength;
@@ -368,7 +368,7 @@ export class EncryptedP2PMessage {
     public async decrypt(privkey: PrivateKeyMaterial): Promise<ArrayBuffer> {
         const ecdhKey = privkey.ecdh;
         const pubkeyID = await privkey.pubKeyID();
-        const encrMsgKeyData = this.encryptedKey.find(([pkid, _]) => arrayBufferEqual(pkid, pubkeyID));
+        const encrMsgKeyData = this.encryptedKey.find(([pkid]) => arrayBufferEqual(pkid, pubkeyID));
         if (typeof encrMsgKeyData === 'undefined') {
             throw new E2EEUnknownRecipient();
         }
@@ -395,7 +395,7 @@ export class EncryptedP2PMessage {
     public async jsonable(tob64 = true): Promise<EncryptedP2PMessageJSON> {
         const encData = fencb64(tob64);
         const pubECDHEData = await subtle.exportKey('raw', this.pubECDHE);
-        const encryptedKeyData: [B64Str, B64Str][] & [ArrayBuffer, ArrayBuffer][] = [];
+        const encryptedKeyData: Array<[B64Str, B64Str]> & Array<[ArrayBuffer, ArrayBuffer]> = [];
         for (const [pubkeyID, encrKey] of this.encryptedKey) {
             encryptedKeyData.push([encData(pubkeyID), encData(encrKey)]);
         }

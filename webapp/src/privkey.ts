@@ -1,32 +1,27 @@
-import {Store, Action} from 'redux';
-import {GlobalState} from 'mattermost-redux/types/store';
-import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
-import {ActionFunc, DispatchFunc, GetStateFunc, ActionResult} from 'mattermost-redux/types/actions';
-import {Client4} from 'mattermost-redux/client';
+import type {Store} from 'redux';
 
-import {PrivateKeyMaterial, PublicKeyMaterial, pubkeyEqual} from './e2ee';
-import {KeyStore, KeyStoreError} from './keystore';
-import {APIClient} from './client';
-import {PrivKeyTypes, PubKeyTypes, KSTypes} from './action_types';
-import {gpgBackupFormat, gpgEncrypt, gpgParseBackup} from './backup_gpg';
+import {Client4} from 'mattermost-redux/client';
+import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
+import type {ActionFunc, DispatchFunc, GetStateFunc} from 'mattermost-redux/types/actions';
+import type {GlobalState} from 'mattermost-redux/types/store';
+
+import {KSTypes} from './action_types';
 import {getPubKeys, setPrivKey} from './actions';
+import {gpgBackupFormat, gpgEncrypt, gpgParseBackup} from './backup_gpg';
+import {APIClient} from './client';
+import {PrivateKeyMaterial, pubkeyEqual} from './e2ee';
+import HKP from './hkp';
+import {KeyStore, KeyStoreError} from './keystore';
 import {selectPrivkey, selectKS} from './selectors';
 import {observeStore} from './utils';
-import HKP from './hkp';
 
 type StoreTy = Store;
 
 export class AppPrivKeyIsDifferent extends Error { }
 
-interface GeneratedKey {
-    privkey: PrivateKeyMaterial;
-    backupClear: string;
-    backupGPG: string | null;
-}
-
 export class AppPrivKey {
     static init(store: StoreTy): ActionFunc {
-        return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
+        return async (_dispatch: DispatchFunc, _getState: GetStateFunc) => {
             const user = getCurrentUserId(store.getState());
             let ks: KeyStore;
             try {
@@ -40,7 +35,7 @@ export class AppPrivKey {
             });
             observeStore(store, selectPrivkey, AppPrivKey.privkeyChanged);
 
-            // @ts-ignore
+            // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
             const {error} = await store.dispatch(AppPrivKey.load(ks));
             if (error) {
                 return {error};
@@ -61,7 +56,7 @@ export class AppPrivKey {
         return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
             const userId = getCurrentUserId(getState());
 
-            // @ts-ignore
+            // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
             const {data: pubkeys, error} = await dispatch(getPubKeys([userId]));
             if (error) {
                 return {error};
@@ -71,8 +66,8 @@ export class AppPrivKey {
     }
 
     static userHasPubkey(): ActionFunc {
-        return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
-            // @ts-ignore
+        return async (dispatch: DispatchFunc, _getState: GetStateFunc) => {
+            // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
             const {data, error} = await dispatch(AppPrivKey.getUserPubkey());
             if (error) {
                 return {data: false};
@@ -82,7 +77,7 @@ export class AppPrivKey {
     }
 
     static import(backupGPG: string, force: boolean): ActionFunc {
-        return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
+        return async (dispatch: DispatchFunc, _getState: GetStateFunc) => {
             try {
                 const key = await gpgParseBackup(backupGPG, false /* exportable */);
                 if (!force) {
@@ -118,7 +113,7 @@ export class AppPrivKey {
     }
 
     static async checkPrivKey(dispatch: DispatchFunc, key: PrivateKeyMaterial): Promise<boolean> {
-        // @ts-ignore
+        // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
         const {data, error} = await dispatch(AppPrivKey.getUserPubkey());
         if (error) {
             throw error;
@@ -131,14 +126,14 @@ export class AppPrivKey {
     }
 
     static generate(): ActionFunc {
-        return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
+        return async (dispatch: DispatchFunc, _getState: GetStateFunc) => {
             const privkeyProm = PrivateKeyMaterial.create(true /* extractible */);
             const gpgArmoredPubKeyProm = dispatch(this.getGPGPubKey());
             let privkey: PrivateKeyMaterial = await privkeyProm;
             const backupClear = await gpgBackupFormat(privkey);
             let backupGPG;
             try {
-                // @ts-ignore
+                // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
                 const {data: gpgArmoredPubKey, error} = await gpgArmoredPubKeyProm;
                 if (error) {
                     throw error;
@@ -151,7 +146,7 @@ export class AppPrivKey {
             // Reimport the key as non extractible
             privkey = await gpgParseBackup(backupClear, false /* extractible */);
 
-            // @ts-ignore
+            // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
             const {error} = await dispatch(AppPrivKey.setPrivKey(privkey, true /* store */, backupGPG.data || null));
             if (error) {
                 return {error};
@@ -192,7 +187,7 @@ export class AppPrivKey {
     }
 
     private static setPrivKey(key: PrivateKeyMaterial, store: boolean, backupGPG: string | null) {
-        return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
+        return async (dispatch: DispatchFunc, _getState: GetStateFunc) => {
             await dispatch(setPrivKey(key));
             if (store) {
                 try {

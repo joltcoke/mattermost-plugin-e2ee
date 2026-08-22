@@ -1,21 +1,20 @@
 /* eslint max-nested-callbacks: ["error", 3] */
 
+import {getE2EEPostUpdateSupported} from 'compat';
+import {E2EEUnknownRecipient} from 'e2ee';
+import {decryptPost} from 'e2ee_post';
+import {msgCache} from 'msg_cache';
 import PropTypes from 'prop-types';
 import React, {useEffect, useState} from 'react';
 
-// @ts-ignore
-const {formatText, messageHtmlToComponent} = window.PostUtils;
-
-import {decryptPost} from 'e2ee_post';
-import {E2EEUnknownRecipient} from 'e2ee';
-import {msgCache} from 'msg_cache';
-import {getE2EEPostUpdateSupported} from 'compat';
-
-import {E2EEPostProps} from './index';
+import type {E2EEPostProps} from './index';
 import './e2ee_post.css';
 
+// @ts-expect-error PostUtils is a runtime global injected by the webapp, not declared in our types
+const {formatText, messageHtmlToComponent} = window.PostUtils;
+
 export const E2EEPost: React.FC<E2EEPostProps> = (props) => {
-    const {post, privkey, currentUserID, actions} = props;
+    const {post, privkey, actions} = props;
 
     const [msgText, setMsgText] = useState('');
     const [headerClasses, setHeaderClasses] = useState('e2ee_post_header');
@@ -73,7 +72,7 @@ export const E2EEPost: React.FC<E2EEPostProps> = (props) => {
 
             // TODO: AG: see src/types.ts to see why we need to ignore the type
             // checker (cf. MyActionResult)
-            // @ts-ignore
+            // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
             then(({data: reskey, error}) => {
                 if (error) {
                     throw error;
@@ -110,20 +109,19 @@ export const E2EEPost: React.FC<E2EEPostProps> = (props) => {
 
 E2EEPost.propTypes = {
 
-    // @ts-ignore
+    // @ts-expect-error PropTypes validator does not match the strict prop interface
     post: PropTypes.object.isRequired,
 
-    // @ts-ignore
+    // @ts-expect-error PropTypes validator does not match the strict prop interface
     privkey: PropTypes.object.isRequired,
 
     currentUserID: PropTypes.string.isRequired,
 
     actions: {
 
-        // @ts-ignore
+        // @ts-expect-error PropTypes validator does not match the strict prop interface
         getPubKeys: PropTypes.func.isRequired,
 
-        // @ts-ignore
         updatePost: PropTypes.func.isRequired,
     },
 };
