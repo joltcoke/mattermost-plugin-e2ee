@@ -1,5 +1,6 @@
+import {ClientError} from '@mattermost/client';
+
 import {Client4} from 'mattermost-redux/client';
-import {ClientError} from 'mattermost-redux/client/client4';
 
 interface KeyListing {
     KeyID: string;

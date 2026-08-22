@@ -1,6 +1,6 @@
 import type {Store} from 'redux';
 
-import type {GlobalState} from 'mattermost-redux/types/store';
+import type {GlobalState} from '@mattermost/types/store';
 
 export const isNode = typeof process !== 'undefined' &&
   process.versions != null &&

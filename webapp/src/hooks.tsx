@@ -1,13 +1,14 @@
 import React from 'react';
 import type {Store} from 'redux';
 
+import type {Channel} from '@mattermost/types/channels';
+import type {Post} from '@mattermost/types/posts';
+import type {UserProfile} from '@mattermost/types/users';
+
 import * as UserActions from 'mattermost-redux/actions/users';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getCurrentChannelId} from 'mattermost-redux/selectors/entities/common';
 import {getCurrentUser, getCurrentUserId, makeGetProfilesInChannel, getUser} from 'mattermost-redux/selectors/entities/users';
-import type {Channel} from 'mattermost-redux/types/channels';
-import type {Post} from 'mattermost-redux/types/posts';
-import type {UserProfile} from 'mattermost-redux/types/users';
 
 import {EncrStatutTypes, EventTypes, PubKeyTypes} from './action_types';
 import {getPubKeys, getChannelEncryptionMethod, sendEphemeralPost, openImportModal} from './actions';
@@ -17,7 +18,7 @@ import Icon from './components/icon';
 import {E2EE_CHAN_ENCR_METHOD_NONE, E2EE_CHAN_ENCR_METHOD_P2P, E2EE_POST_TYPE} from './constants';
 // eslint-disable-next-line import/no-unresolved
 import type {PublicKeyMaterial} from './e2ee';
-import {encryptPost, decryptPost, isEncryptedPost} from './e2ee_post';
+import {encryptPost, decryptPost, isEncryptedPost, getE2EEProp} from './e2ee_post';
 import {msgCache} from './msg_cache';
 import {sendDesktopNotification} from './notification_actions';
 import {shouldNotify} from './notifications';
@@ -43,7 +44,6 @@ export default class E2EEHooks {
         observeStore(store, getCurrentUserId, async (_s: any, _v: any) => {
             msgCache.clear();
 
-            // @ts-expect-error dispatch() typing does not account for thunk actions
             await store.dispatch(AppPrivKey.init(store));
         });
     }
@@ -82,6 +82,9 @@ export default class E2EEHooks {
             }
             const state = this.store.getState();
             const channel = getChannel(state, post.channel_id);
+            if (typeof channel === 'undefined') {
+                return;
+            }
             if (channel.type === 'D' || channel.type === 'G') {
                 // The mattermost system already sends a notification (but w/o
                 // the decrypted message. Nothing we can do about it for now as
@@ -103,7 +106,7 @@ export default class E2EEHooks {
                 if (senderkey === null) {
                     return;
                 }
-                decrMsg = await decryptPost(post.props.e2ee, senderkey, privkey);
+                decrMsg = await decryptPost(getE2EEProp(post)!, senderkey, privkey);
                 msgCache.addDecrypted(post, decrMsg);
             }
             if (shouldNotify(decrMsg, curUser)) {

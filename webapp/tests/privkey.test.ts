@@ -1,9 +1,10 @@
 import {jest} from '@jest/globals';
 import configureStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
+import {thunk} from 'redux-thunk';
+
+import {ClientError} from '@mattermost/client';
 
 import {Client4} from 'mattermost-redux/client';
-import {ClientError} from 'mattermost-redux/client/client4';
 
 import {generateGPGKey, initOpenGPG, finiOpenGPG} from './helpers';
 

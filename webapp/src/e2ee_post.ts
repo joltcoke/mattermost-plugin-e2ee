@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
 
-import type {Post} from 'mattermost-redux/types/posts.js';
+import type {Post} from '@mattermost/types/posts';
 
 import {E2EE_POST_TYPE} from './constants';
 import type {PrivateKeyMaterial, PublicKeyMaterial, EncryptedP2PMessageJSON} from './e2ee';
@@ -42,6 +42,13 @@ export async function decryptPost(e2ee: EncryptedP2PMessageJSON, senderkey: Publ
     return new UtilTextDecoder('utf-8').decode(msg);
 }
 
+// getE2EEProp narrows post.props.e2ee (untyped in @mattermost/types since
+// props is a Record<string, unknown> plugin metadata bag) to the shape this
+// plugin itself puts there in encryptPost.
+export function getE2EEProp(post: Post): EncryptedP2PMessageJSON | undefined {
+    return post.props?.e2ee as EncryptedP2PMessageJSON | undefined;
+}
+
 export function isEncryptedPost(post: Post): boolean {
-    return (typeof post.props !== 'undefined') && (typeof post.props.e2ee !== 'undefined');
+    return typeof getE2EEProp(post) !== 'undefined';
 }

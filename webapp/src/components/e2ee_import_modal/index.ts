@@ -4,8 +4,10 @@ import {connect} from 'react-redux';
 import type {ActionCreatorsMapObject, Dispatch} from 'redux';
 import {bindActionCreators} from 'redux';
 
-import type {GenericAction, ActionResult, ActionFunc} from 'mattermost-redux/types/actions';
-import type {GlobalState} from 'mattermost-redux/types/store';
+import type {GlobalState} from '@mattermost/types/store';
+
+import type {MMReduxAction} from 'mattermost-redux/action_types';
+import type {ActionResult, ActionFunc, ActionFuncAsync} from 'mattermost-redux/types/actions';
 
 import {openImportModal, closeImportModal} from 'actions';
 import {selectImportModalVisible} from 'selectors';
@@ -24,9 +26,9 @@ type Actions = {
     appPrivKeyImport: (privkey: PrivateKeyMaterial) => Promise<ActionResult>;
 };
 
-function mapDispatchToProps(dispatch: Dispatch<GenericAction>) {
+function mapDispatchToProps(dispatch: Dispatch<MMReduxAction>) {
     return {actions:
-        bindActionCreators<ActionCreatorsMapObject<ActionFunc>, Actions>({
+        bindActionCreators<ActionCreatorsMapObject<ActionFunc | ActionFuncAsync>, Actions>({
             close: closeImportModal,
             open: openImportModal,
             appPrivKeyImport: AppPrivKey.import,
