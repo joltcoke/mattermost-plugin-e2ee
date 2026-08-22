@@ -88,6 +88,20 @@ export default class E2EEHooks {
         // icon whenever the current channel's effective encryption state
         // changes, rather than rendering a component that reacts on its own.
         observeStore(this.store, selectCurrentChannelEncrMethod, this.updateAppBarIcon.bind(this));
+
+        // selectCurrentChannelEncrMethod only reads the cached status; unlike
+        // the channel header's Icon component (which fetches on mount via
+        // useEffect), nothing else actively populates that cache for a
+        // channel that hasn't been fetched yet, so a never-before-viewed
+        // channel would default to "not encrypted" and never get corrected.
+        // Actively fetch (self-caching, so a no-op if already known) on every
+        // channel switch; getChannelEncryptionMethod dispatching
+        // RECEIVED_ENCRYPTION_STATUS is what the watcher above reacts to.
+        observeStore(this.store, getCurrentChannelId, this.fetchChannelEncryptionMethod.bind(this));
+    }
+
+    private async fetchChannelEncryptionMethod(_store: Store, chanID: string) {
+        await this.dispatch(getChannelEncryptionMethod(chanID));
     }
 
     private async updateAppBarIcon(_store: Store, method: string) {
