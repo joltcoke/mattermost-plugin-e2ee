@@ -1,7 +1,7 @@
 // From https://github.com/mickmister/mattermost-plugin-stonks/blob/33c7a5eaeb455aabe55d2e95daa620633cd195a3/webapp/src/registry.ts
 import type React from 'react';
 
-import type {Channel} from '@mattermost/types/channels';
+import type {Channel, ChannelMembership} from '@mattermost/types/channels';
 import type {FileInfo} from '@mattermost/types/files';
 import type {Post} from '@mattermost/types/posts';
 
@@ -51,6 +51,21 @@ export interface PluginRegistry {
         action: (channel: Channel) => void,
         dropdownText: React.ReactNode,
         tooltipText: string
+    ): UniqueIdentifier;
+
+    // Register an icon in the App Bar (the replacement for the channel header's plugin icon
+    // section as of Mattermost v7.0 - see https://mattermost.com/blog/mattermost-v7-0-is-now-available/#apps).
+    // Accepts the following:
+    // - iconUrl - a URL (including data: URIs) for the icon to display; unlike
+    //   registerChannelHeaderButtonAction, this can't be an arbitrary React component
+    // - action - a function called when the icon is clicked, passed the channel and channel member as arguments
+    // - tooltipText - string or React element shown for tooltip on hover
+    // Returns a unique identifier, which can be passed to unregisterComponent to remove and
+    // re-register the icon (e.g. to update iconUrl).
+    registerAppBarComponent(
+        iconUrl: string,
+        action: (channel: Channel, member: ChannelMembership) => void,
+        tooltipText: React.ReactNode
     ): UniqueIdentifier;
 
     // Register a component to render a custom body for posts with a specific type.
