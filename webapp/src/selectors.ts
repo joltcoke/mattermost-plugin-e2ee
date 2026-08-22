@@ -1,5 +1,6 @@
+import type {GlobalState} from '@mattermost/types/store';
+
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
-import type {GlobalState} from 'mattermost-redux/types/store';
 
 import {StateID} from './constants';
 import type {PluginState} from './types';

@@ -1,4 +1,6 @@
-import type {Post} from 'mattermost-redux/types/posts';
+import type {Post} from '@mattermost/types/posts';
+
+import {getE2EEProp} from './e2ee_post';
 
 const MAX_MSGS = 5000;
 
@@ -10,10 +12,11 @@ class MsgCacheImpl {
     }
 
     addMine(post: Post, orgMsg: string) {
-        if (!post.props || !post.props.e2ee) {
+        const e2ee = getE2EEProp(post);
+        if (!e2ee) {
             return;
         }
-        this.cacheDecrypted.set(post.pending_post_id, [orgMsg, post.props.e2ee.signature]);
+        this.cacheDecrypted.set(post.pending_post_id, [orgMsg, e2ee.signature as string]);
         MsgCacheImpl.checkSize(this.cacheDecrypted);
     }
 
@@ -22,7 +25,7 @@ class MsgCacheImpl {
             return;
         }
         const id = MsgCacheImpl.postID(post);
-        this.cacheDecrypted.set(id, [msg, post.props.e2ee.signature]);
+        this.cacheDecrypted.set(id, [msg, getE2EEProp(post)!.signature as string]);
         MsgCacheImpl.checkSize(this.cacheDecrypted);
     }
 
@@ -33,12 +36,13 @@ class MsgCacheImpl {
         if (typeof post.id === 'undefined') {
             return;
         }
-        this.cacheDecrypted.set(post.id, [msg, post.props.e2ee.signature]);
+        this.cacheDecrypted.set(post.id, [msg, getE2EEProp(post)!.signature as string]);
         MsgCacheImpl.checkSize(this.cacheDecrypted);
     }
 
     get(post: Post): string | null {
-        if (!post.props || !post.props.e2ee) {
+        const e2ee = getE2EEProp(post);
+        if (!e2ee) {
             return null;
         }
         if (typeof post.id === 'undefined') {
@@ -50,7 +54,7 @@ class MsgCacheImpl {
             return null;
         }
         const [msg, signature] = data;
-        return (post.props.e2ee.signature === signature) ? msg : null;
+        return (e2ee.signature === signature) ? msg : null;
     }
 
     clear() {

@@ -1,14 +1,14 @@
 import {combineReducers} from 'redux';
 
 import {ChannelTypes} from 'mattermost-redux/action_types';
-import type {GenericAction} from 'mattermost-redux/types/actions';
+import type {MMReduxAction} from 'mattermost-redux/action_types';
 
 import {PubKeyTypes, PrivKeyTypes, EncrStatutTypes, EventTypes, ImportModalTypes, KSTypes} from './action_types';
 import type {PrivateKeyMaterial} from './e2ee';
 import type {KeyStore} from './keystore';
 import type {PubKeysState, ChansEncrState, ImportModalState} from './types';
 
-function pubkeys(state: PubKeysState = new Map(), action: GenericAction) {
+function pubkeys(state: PubKeysState = new Map(), action: MMReduxAction) {
     switch (action.type) {
     case PubKeyTypes.RECEIVED_PUBKEYS: {
         const nextState = new Map([...state]);
@@ -37,7 +37,7 @@ function pubkeys(state: PubKeysState = new Map(), action: GenericAction) {
     }
 }
 
-function privkey(state: PrivateKeyMaterial | null = null, action: GenericAction) {
+function privkey(state: PrivateKeyMaterial | null = null, action: MMReduxAction) {
     switch (action.type) {
     case PrivKeyTypes.GOT_PRIVKEY:
         return action.data.privkey;
@@ -46,7 +46,7 @@ function privkey(state: PrivateKeyMaterial | null = null, action: GenericAction)
     }
 }
 
-function chansEncrMethod(state: ChansEncrState = new Map(), action: GenericAction) {
+function chansEncrMethod(state: ChansEncrState = new Map(), action: MMReduxAction) {
     switch (action.type) {
     case EncrStatutTypes.RECEIVED_ENCRYPTION_STATUS: {
         const nextState = new Map([...state]);
@@ -70,7 +70,7 @@ function chansEncrMethod(state: ChansEncrState = new Map(), action: GenericActio
     }
 }
 
-function importModal(state: ImportModalState = {visible: false}, action: GenericAction) {
+function importModal(state: ImportModalState = {visible: false}, action: MMReduxAction) {
     switch (action.type) {
     case ImportModalTypes.IMPORT_MODAL_OPEN: {
         return {visible: true};
@@ -83,7 +83,7 @@ function importModal(state: ImportModalState = {visible: false}, action: Generic
     }
 }
 
-function ks(state: KeyStore | null = null, action: GenericAction) {
+function ks(state: KeyStore | null = null, action: MMReduxAction) {
     switch (action.type) {
     case KSTypes.GOT_KS: {
         return action.data;

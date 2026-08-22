@@ -2,7 +2,7 @@
 
 import {getE2EEPostUpdateSupported} from 'compat';
 import {E2EEUnknownRecipient} from 'e2ee';
-import {decryptPost} from 'e2ee_post';
+import {decryptPost, getE2EEProp} from 'e2ee_post';
 import {msgCache} from 'msg_cache';
 import PropTypes from 'prop-types';
 import React, {useEffect, useState} from 'react';
@@ -70,9 +70,6 @@ export const E2EEPost: React.FC<E2EEPostProps> = (props) => {
         const uid = post.user_id;
         actions.getPubKeys([uid]).
 
-            // TODO: AG: see src/types.ts to see why we need to ignore the type
-            // checker (cf. MyActionResult)
-            // @ts-expect-error ActionResult union is not narrowed by v5 types, see MyActionResult in types.ts
             then(({data: reskey, error}) => {
                 if (error) {
                     throw error;
@@ -81,7 +78,7 @@ export const E2EEPost: React.FC<E2EEPostProps> = (props) => {
                 if (senderkey == null) {
                     throw new Error('it is unknown');
                 }
-                decryptPost(post.props.e2ee, senderkey, privkey).
+                decryptPost(getE2EEProp(post)!, senderkey, privkey).
                     then((decrMsg) => {
                         msgCache.addDecrypted(post, decrMsg);
                         setMsgSuccess(decrMsg);

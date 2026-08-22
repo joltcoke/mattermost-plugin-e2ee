@@ -1,9 +1,9 @@
 // From https://github.com/mickmister/mattermost-plugin-stonks/blob/33c7a5eaeb455aabe55d2e95daa620633cd195a3/webapp/src/registry.ts
 import type React from 'react';
 
-import type {Channel} from 'mattermost-redux/types/channels';
-import type {FileInfo} from 'mattermost-redux/types/files';
-import type {Post} from 'mattermost-redux/types/posts';
+import type {Channel} from '@mattermost/types/channels';
+import type {FileInfo} from '@mattermost/types/files';
+import type {Post} from '@mattermost/types/posts';
 
 export type UniqueIdentifier = string;
 export type ContextArgs = {channel_id: string};

@@ -3,8 +3,9 @@ import {PublicKeyMaterial} from 'e2ee';
 import {id as pluginId} from 'manifest';
 import {debouncedMerge, debouncedMergeMapArrayReducer} from 'utils';
 
+import {ClientError} from '@mattermost/client';
+
 import {Client4} from 'mattermost-redux/client';
-import {ClientError} from 'mattermost-redux/client/client4';
 
 export class GPGBackupDisabledError extends Error { }
 

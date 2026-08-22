@@ -1,6 +1,6 @@
 import {PostTypes} from 'mattermost-redux/action_types';
 import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
-import type {ActionFunc, DispatchFunc, GetStateFunc, ActionResult} from 'mattermost-redux/types/actions';
+import type {ActionFunc, ActionFuncAsync, DispatchFunc, GetStateFunc, ActionResult} from 'mattermost-redux/types/actions';
 
 import {PubKeyTypes, EncrStatutTypes, ImportModalTypes, PrivKeyTypes} from './action_types';
 import {APIClient} from './client';
@@ -8,7 +8,7 @@ import type {PrivateKeyMaterial, PublicKeyMaterial} from './e2ee';
 import manifest from './manifest';
 import {getPluginState, selectPubkeys} from './selectors';
 
-export function getPubKeys(userIds: string[]): ActionFunc {
+export function getPubKeys(userIds: string[]): ActionFuncAsync<Map<string, PublicKeyMaterial>> {
     return async (dispatch: DispatchFunc, getState: GetStateFunc): Promise<ActionResult> => {
         // Find if we have suitable ones in cache
         const ret = new Map<string, PublicKeyMaterial>();
@@ -46,7 +46,7 @@ export function getPubKeys(userIds: string[]): ActionFunc {
     };
 }
 
-export function getChannelEncryptionMethod(chanID: string): ActionFunc {
+export function getChannelEncryptionMethod(chanID: string): ActionFuncAsync {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         // @ts-expect-error state[StateID] indexing is not typed on GlobalState
         const method = getPluginState(getState()).chansEncrMethod.get(chanID) || null;
@@ -114,7 +114,7 @@ export function closeImportModal(): ActionFunc {
     };
 }
 
-export function setPrivKey(privkey: PrivateKeyMaterial): ActionFunc {
+export function setPrivKey(privkey: PrivateKeyMaterial): ActionFuncAsync {
     return async (dispatch: DispatchFunc, getState: GetStateFunc) => {
         const data = {
             privkey,
