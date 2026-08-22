@@ -1,4 +1,4 @@
-import type {Store, Action} from 'redux';
+import type {Store, UnknownAction} from 'redux';
 
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import type {GlobalState} from 'mattermost-redux/types/store';
@@ -18,7 +18,7 @@ import type {PluginRegistry} from './types/mattermost-webapp';
 export default class Plugin {
     hooks?: E2EEHooks;
 
-    public async initialize(registry: PluginRegistry, store: Store<GlobalState, Action<Record<string, unknown>>>) {
+    public async initialize(registry: PluginRegistry, store: Store<GlobalState, UnknownAction>) {
         const mmconfig = getConfig(store.getState());
 
         // Mattermost >= 6.6 has a new way to edit widget, but it doesn't call
