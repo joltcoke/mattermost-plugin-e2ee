@@ -19,25 +19,17 @@ jobs:
         uses: actions/checkout@v7          
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
-      - name: Restore Go cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            go-mod-v1-${{ runner.os }}-
-
       - name: Restore npm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: webapp/node_modules
           key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
@@ -50,7 +42,7 @@ jobs:
           npm install
 
       - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.13.1
           args: --timeout=5m
@@ -80,25 +72,17 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
-      - name: Restore Go cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            go-mod-v1-${{ runner.os }}-
-
       - name: Restore npm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: webapp/node_modules
           key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
@@ -118,27 +102,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
-      - name: Restore Go cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: go-mod-v1-${{ runner.os }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            go-mod-v1-${{ runner.os }}-
-
       - name: Restore npm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: webapp/node_modules
           key: npm-v1-${{ runner.os }}-${{ hashFiles('webapp/package-lock.json') }}
@@ -162,13 +140,17 @@ jobs:
             git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git describe --tags --abbrev=0 $(git describe --tags --abbrev=0)^)..HEAD >> dist/release-notes.md
           fi
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload plugin bundle
+        uses: actions/upload-artifact@v7.0.1
         with:
-          name: dist
-          path: |
-            dist/*.tar.gz
-            dist/release-notes.md
+          path: dist/*.tar.gz
+          archive: false
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          path: dist/release-notes.md
+          archive: false
 
   deploy-release-github:
     runs-on: ubuntu-latest
@@ -181,15 +163,15 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
-          name: dist
           path: dist
+          merge-multiple: true
 
       - name: Install ghr
         run: |
